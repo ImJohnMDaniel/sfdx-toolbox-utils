@@ -4,7 +4,7 @@ import * as _ from 'lodash';
 import { join } from 'path';
 
 core.Messages.importMessagesDirectory(join(__dirname));
-const messages = core.Messages.loadMessages('rstk-sfdx-utils', 'rstk-apex-codecoverage-check');
+const messages = core.Messages.loadMessages('@dx-cli-toolbox/sfdx-toolbox-utils', 'toolbox-apex-codecoverage-check');
 
 export default class Check extends SfdxCommand {
 
@@ -34,8 +34,8 @@ export default class Check extends SfdxCommand {
         // const blue = projectJson.get('contents');
         // this.ux.logJson(blue);
 
-        // const converageRequirementForApexClass = _.get(projectJson.get('plugins'), 'rstk.coverageRequirement') || 70;
-        // const converageRequirementForApexClass = _.get(projectJson.get('contents'), 'plugins.rstk.coverageRequirementForClasses', 81);
+        // const converageRequirementForApexClass = _.get(projectJson.get('plugins'), 'toolbox.coverageRequirement') || 70;
+        // const converageRequirementForApexClass = _.get(projectJson.get('contents'), 'plugins.toolbox.coverageRequirementForClasses', 81);
 
         // this.ux.logJson(converageRequirementForApexClass);
         // When reading a file with core library, it is an async operation and thus you need the "await" command added.
@@ -49,8 +49,8 @@ export default class Check extends SfdxCommand {
         let orgHasSufficientCodeCoverage = true;
         const actionMessages = [];
 
-        const ignoreClassCoverageProjectJsonSetting = _.get(projectJson['contents'], 'plugins.rstk.coverageRequirement.ignoreClassCoverage', false) as boolean;
-        const ignoreOrgCoverageProjectJsonSetting = _.get(projectJson['contents'], 'plugins.rstk.coverageRequirement.ignoreOrgCoverage', false) as boolean;
+        const ignoreClassCoverageProjectJsonSetting = _.get(projectJson['contents'], 'plugins.toolbox.coverageRequirement.ignoreClassCoverage', false) as boolean;
+        const ignoreOrgCoverageProjectJsonSetting = _.get(projectJson['contents'], 'plugins.toolbox.coverageRequirement.ignoreOrgCoverage', false) as boolean;
 
         // flag true should override attribute.  the flag=true means that we should ignore, so don't go into the If/block
         // flag = null    attribute = true    reasult = false
@@ -59,7 +59,7 @@ export default class Check extends SfdxCommand {
         // flag = true    attribute = false    reasult = false
 
         if ( ! this.flags.ignoreorgcoverage && ! ignoreOrgCoverageProjectJsonSetting) {
-            const converageRequirementForOrg = _.get(projectJson['contents'], 'plugins.rstk.coverageRequirement.org', 50);
+            const converageRequirementForOrg = _.get(projectJson['contents'], 'plugins.toolbox.coverageRequirement.org', "50");
             const summaryResultInformation = testResultInformation.summary;
             const orgWideCoverage = summaryResultInformation.orgWideCoverage.replace('%', '');
 
@@ -87,7 +87,7 @@ export default class Check extends SfdxCommand {
         }
 
         if ( ! this.flags.ignoreclasscoverage && ! ignoreClassCoverageProjectJsonSetting) {
-            const converageRequirementForApexClass = _.get(projectJson['contents'], 'plugins.rstk.coverageRequirement.classes', 75);
+            const converageRequirementForApexClass = _.get(projectJson['contents'], 'plugins.toolbox.coverageRequirement.classes', 73);
 
             const coverageResultInformation = testResultInformation.coverage;
             // this.ux.logJson(coverageResultInformation);
@@ -107,7 +107,13 @@ export default class Check extends SfdxCommand {
                 const classSuccessResult = {};
                 // this.ux.log('coverage[coveredPercent] == ' + coverage['coveredPercent']);
                 classSuccessResult['name'] = coverage['name'];
-                classSuccessResult['coveredPercent'] = coverage['coveredPercent'];
+
+                if (_.isInteger(coverage['coveredPercent'])) {
+                    classSuccessResult['coveredPercent'] = _.toString(coverage['coveredPercent']);
+                } else {
+                    classSuccessResult['coveredPercent'] = coverage['coveredPercent'];
+                }
+
                 if (coverage['coveredPercent'] < converageRequirementForApexClass) {
                     // TODO: Need to refactor this to list all errors once the process is complete
                     // throw new core.SfdxError(`The coverage for ${coverage['name']} is less than ${converageRequirementForApexClass}`);
@@ -131,14 +137,14 @@ export default class Check extends SfdxCommand {
             checkResult['coverage'].classes = classesResult;
         }
 
-        const throwErrorOnInsufficientOrgCoverageProjectJsonSetting = _.get(projectJson['contents'], 'plugins.rstk.coverageRequirement.throwErrorOnInsufficientOrgCoverage', false) as boolean;
-        const throwErrorOnInsufficientClassCoverageProjectJsonSetting = _.get(projectJson['contents'], 'plugins.rstk.coverageRequirement.throwErrorOnInsufficientClassCoverage', false) as boolean;
+        const throwErrorOnInsufficientOrgCoverageProjectJsonSetting = _.get(projectJson['contents'], 'plugins.toolbox.coverageRequirement.throwErrorOnInsufficientOrgCoverage', false) as boolean;
+        const throwErrorOnInsufficientClassCoverageProjectJsonSetting = _.get(projectJson['contents'], 'plugins.toolbox.coverageRequirement.throwErrorOnInsufficientClassCoverage', false) as boolean;
 
         // throw error if called for
         if ( (!this.flags.ignoreorgcoverage && ( this.flags.throwerroroninsufficientorgcoverage || throwErrorOnInsufficientOrgCoverageProjectJsonSetting) && !orgHasSufficientCodeCoverage)
             || (!this.flags.ignoreclasscoverage && (this.flags.throwerroroninsufficientclasscoverage || throwErrorOnInsufficientClassCoverageProjectJsonSetting) && !allClassesHaveSufficientCodeCoverage)
         ) {
-           throw new core.SfdxError('Code Coverage Insufficient', 'CODE COVERAGE INSUFFICIENT', actionMessages, 1, null);
+           throw new core.SfdxError('Code Coverage Insufficient', 'CODE_COVERAGE_INSUFFICIENT', actionMessages, 1, null);
         }
 
         // Return an object to be displayed with --json
