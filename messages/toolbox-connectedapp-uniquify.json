@@ -1,0 +1,5 @@
+{
+    "commandDescription": "Modifis a clientId/consumerKey on a local connected app file to guaranatee uniqueness.",
+    "exampleDescription": "$ sfdx toolbox:connectedapp:uniquify -a sfdx-source/main/connectedApps/myConnectedApp.connectedApp-meta.xml\nUpdate the consumerKey of myConnectedApp to be unique"
+  }
+  

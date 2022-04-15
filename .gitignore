@@ -8,7 +8,7 @@
 /dist
 /lib
 /package-lock.json
-/referencedxproject/.sfdx
+/referencedxproject
 /sfdx-source
 /stuff
 /target

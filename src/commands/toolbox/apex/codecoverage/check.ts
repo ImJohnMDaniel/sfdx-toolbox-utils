@@ -1,49 +1,54 @@
-import { core, flags, SfdxCommand } from '@salesforce/command';
+import { Flags, CliUx } from '@oclif/core';
+import { SfCommand } from '@salesforce/sf-plugins-core';
+import { Messages, SfError, SfProject } from '@salesforce/core';
 import fs = require('fs-extra');
 import * as _ from 'lodash';
-import { join } from 'path';
 
-core.Messages.importMessagesDirectory(join(__dirname));
-const messages = core.Messages.loadMessages('@dx-cli-toolbox/sfdx-toolbox-utils', 'toolbox-apex-codecoverage-check');
+Messages.importMessagesDirectory(__dirname);
+const messages = Messages.loadMessages('@dx-cli-toolbox/sfdx-toolbox-utils', 'toolbox-apex-codecoverage-check');
 
-export default class Check extends SfdxCommand {
+export interface CheckResponse {
+
+}
+
+export default class Check extends SfCommand<CheckResponse> {
 
     public static description = messages.getMessage('commandDescription');
 
     public static examples = [messages.getMessage('example1Description'), messages.getMessage('example2Description')];
 
-    protected static flagsConfig = {
-        testcoveragefile: flags.string({ char: 'f', required: true, description: messages.getMessage('testCoverageFileFlagDescription') }),
-        ignoreorgcoverage: flags.boolean({ char: 'o', required: false, default: false, description: messages.getMessage('ignoreOrgCoverageFailureFlagDescription')}),
-        ignoreclasscoverage: flags.boolean({ char: 'c', required: false, default: false, description: messages.getMessage('ignoreClassCoverageFailuresFlagDescription')}),
-        throwerroroninsufficientorgcoverage: flags.boolean({ char: 'x', required: false, default: false, description: messages.getMessage('throwErrorOnInsufficientOrgCoverageFlagDescription')}),
-        throwerroroninsufficientclasscoverage: flags.boolean({ char: 'y', required: false, default: false, description: messages.getMessage('throwErrorOnInsufficientClassCoverageFlagDescription')})
+    public static flags = {
+        testcoveragefile: Flags.string({ char: 'f', required: true, description: messages.getMessage('testCoverageFileFlagDescription') }),
+        ignoreorgcoverage: Flags.boolean({ char: 'o', required: false, default: false, description: messages.getMessage('ignoreOrgCoverageFailureFlagDescription')}),
+        ignoreclasscoverage: Flags.boolean({ char: 'c', required: false, default: false, description: messages.getMessage('ignoreClassCoverageFailuresFlagDescription')}),
+        throwerroroninsufficientorgcoverage: Flags.boolean({ char: 'x', required: false, default: false, description: messages.getMessage('throwErrorOnInsufficientOrgCoverageFlagDescription')}),
+        throwerroroninsufficientclasscoverage: Flags.boolean({ char: 'y', required: false, default: false, description: messages.getMessage('throwErrorOnInsufficientClassCoverageFlagDescription')})
     };
 
     // Set this to true if your command requires a project workspace; 'requiresProject' is false by default
-    protected static requiresProject = true;
+    public static requiresProject = true;
 
-    public async run(): Promise<any> { // tslint:disable-line:no-any
-
+    public async run(): Promise<CheckResponse> { // tslint:disable-line:no-any
+        const { flags } = await this.parse(Check);
         const checkResult = {};
         
-
-        const projectJson = await this.project.retrieveSfdxProjectJson();
-        // this.ux.logJson(projectJson);
-        // this.ux.logJson(projectJson['contents']); // this approach works!!!
+        // const projectJson = await this.project.retrieveSfdxProjectJson();
+        const projectJson: SfProject = await SfProject.resolve();
+        // CliUx.ux.logJson(projectJson);
+        // CliUx.ux.logJson(projectJson['contents']); // this approach works!!!
         // const blue = projectJson.get('contents');
-        // this.ux.logJson(blue);
+        // CliUx.ux.logJson(blue);
 
         // const converageRequirementForApexClass = _.get(projectJson.get('plugins'), 'toolbox.coverageRequirement') || 70;
         // const converageRequirementForApexClass = _.get(projectJson.get('contents'), 'plugins.toolbox.coverageRequirementForClasses', 81);
 
-        // this.ux.logJson(converageRequirementForApexClass);
+        // CliUx.ux.logJson(converageRequirementForApexClass);
         // When reading a file with core library, it is an async operation and thus you need the "await" command added.
-        this.ux.log(messages.getMessage('commandStartMessage', [this.flags.testcoveragefile]));
-        checkResult['testCoverageFileReviewed'] = this.flags.testcoveragefile;
+        CliUx.ux.log(messages.getMessage('commandStartMessage', [flags.testcoveragefile]));
+        checkResult['testCoverageFileReviewed'] = flags.testcoveragefile;
         // JSON.parse(fs.readFileSync(projectFile.getPath(), 'UTF-8'));
-        // const coverages = await core.fs.readJsonMap(this.flags.testcoveragefile);
-        const testResultInformation = JSON.parse(fs.readFileSync(this.flags.testcoveragefile, 'UTF-8'));
+        // const coverages = await core.fs.readJsonMap(flags.testcoveragefile);
+        const testResultInformation = JSON.parse(fs.readFileSync(flags.testcoveragefile, 'UTF-8'));
 
         let allClassesHaveSufficientCodeCoverage = true;
         let orgHasSufficientCodeCoverage = true;
@@ -58,7 +63,7 @@ export default class Check extends SfdxCommand {
         // flag = null    attribute = false    reasult = true
         // flag = true    attribute = false    reasult = false
 
-        if ( ! this.flags.ignoreorgcoverage && ! ignoreOrgCoverageProjectJsonSetting) {
+        if ( ! flags.ignoreorgcoverage && ! ignoreOrgCoverageProjectJsonSetting) {
             const converageRequirementForOrg = _.get(projectJson['contents'], 'plugins.toolbox.coverageRequirement.org', "50");
             const summaryResultInformation = testResultInformation.summary;
             const orgWideCoverage = summaryResultInformation.orgWideCoverage.replace('%', '');
@@ -68,12 +73,12 @@ export default class Check extends SfdxCommand {
             orgSuccessResult['coveredPercent'] = orgWideCoverage;
             orgSuccessResult['converageRequirementForOrg'] = converageRequirementForOrg;
 
-            // this.ux.log('orgWideCoverage == ' + orgWideCoverage);
+            // CliUx.ux.log('orgWideCoverage == ' + orgWideCoverage);
             if ( orgWideCoverage < converageRequirementForOrg ) {
                 // TODO: Need to refactor this to list all errors once the process is complete
                 // throw new core.SfdxError(messages.getMessage('errorOrgWideCoverageBelowMinimum', [orgWideCoverage, converageRequirementForOrg]));
                 actionMessages.push(messages.getMessage('errorOrgWideCoverageBelowMinimum', [orgWideCoverage, converageRequirementForOrg]));
-                this.ux.error(messages.getMessage('errorOrgWideCoverageBelowMinimum', [orgWideCoverage, converageRequirementForOrg]));
+                CliUx.ux.error(messages.getMessage('errorOrgWideCoverageBelowMinimum', [orgWideCoverage, converageRequirementForOrg]));
 
                 orgSuccessResult['success'] = false;
                 orgHasSufficientCodeCoverage = false;
@@ -86,14 +91,14 @@ export default class Check extends SfdxCommand {
             checkResult['coverage'].org = orgSuccessResult;
         }
 
-        if ( ! this.flags.ignoreclasscoverage && ! ignoreClassCoverageProjectJsonSetting) {
+        if ( ! flags.ignoreclasscoverage && ! ignoreClassCoverageProjectJsonSetting) {
             const converageRequirementForApexClass = _.get(projectJson['contents'], 'plugins.toolbox.coverageRequirement.classes', 73);
 
             const coverageResultInformation = testResultInformation.coverage;
-            // this.ux.logJson(coverageResultInformation);
+            // CliUx.ux.logJson(coverageResultInformation);
 
             const coverageSubsectionResultInformation = coverageResultInformation.coverage;
-            // this.ux.logJson(coverageSubsectionResultInformation);
+            // CliUx.ux.logJson(coverageSubsectionResultInformation);
 
             // orgSuccessResult['success'] = false;
             const classDetailCoverages = [];
@@ -105,7 +110,7 @@ export default class Check extends SfdxCommand {
             // this reviews the individual coverage for each Apex class file
             _.forEach(coverageSubsectionResultInformation, coverage => {
                 const classSuccessResult = {};
-                // this.ux.log('coverage[coveredPercent] == ' + coverage['coveredPercent']);
+                // CliUx.ux.log('coverage[coveredPercent] == ' + coverage['coveredPercent']);
                 classSuccessResult['name'] = coverage['name'];
 
                 if (_.isInteger(coverage['coveredPercent'])) {
@@ -117,9 +122,9 @@ export default class Check extends SfdxCommand {
                 if (coverage['coveredPercent'] < converageRequirementForApexClass) {
                     // TODO: Need to refactor this to list all errors once the process is complete
                     // throw new core.SfdxError(`The coverage for ${coverage['name']} is less than ${converageRequirementForApexClass}`);
-                    // this.ux.error(`The coverage for ${coverage['name']} is less than ${converageRequirementForApexClass}`);
+                    // CliUx.ux.error(`The coverage for ${coverage['name']} is less than ${converageRequirementForApexClass}`);
                     actionMessages.push(messages.getMessage('errorClassCoverageBelowMinimum', [coverage['name'], coverage['coveredPercent'], converageRequirementForApexClass]));
-                    this.ux.error(messages.getMessage('errorClassCoverageBelowMinimum', [coverage['name'], coverage['coveredPercent'], converageRequirementForApexClass]));
+                    CliUx.ux.error(messages.getMessage('errorClassCoverageBelowMinimum', [coverage['name'], coverage['coveredPercent'], converageRequirementForApexClass]));
                     classSuccessResult['success'] = false;
                     allClassesHaveSufficientCodeCoverage = false;
                 } else {
@@ -141,10 +146,10 @@ export default class Check extends SfdxCommand {
         const throwErrorOnInsufficientClassCoverageProjectJsonSetting = _.get(projectJson['contents'], 'plugins.toolbox.coverageRequirement.throwErrorOnInsufficientClassCoverage', false) as boolean;
 
         // throw error if called for
-        if ( (!this.flags.ignoreorgcoverage && ( this.flags.throwerroroninsufficientorgcoverage || throwErrorOnInsufficientOrgCoverageProjectJsonSetting) && !orgHasSufficientCodeCoverage)
-            || (!this.flags.ignoreclasscoverage && (this.flags.throwerroroninsufficientclasscoverage || throwErrorOnInsufficientClassCoverageProjectJsonSetting) && !allClassesHaveSufficientCodeCoverage)
+        if ( (!flags.ignoreorgcoverage && ( flags.throwerroroninsufficientorgcoverage || throwErrorOnInsufficientOrgCoverageProjectJsonSetting) && !orgHasSufficientCodeCoverage)
+            || (!flags.ignoreclasscoverage && (flags.throwerroroninsufficientclasscoverage || throwErrorOnInsufficientClassCoverageProjectJsonSetting) && !allClassesHaveSufficientCodeCoverage)
         ) {
-           throw new core.SfdxError('Code Coverage Insufficient', 'CODE_COVERAGE_INSUFFICIENT', actionMessages, 1, null);
+            throw new SfError('Code Coverage Insufficient', 'CODE_COVERAGE_INSUFFICIENT', actionMessages, 1, null);
         }
 
         // Return an object to be displayed with --json
