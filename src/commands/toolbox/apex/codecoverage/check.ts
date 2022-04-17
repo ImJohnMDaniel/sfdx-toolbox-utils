@@ -80,8 +80,9 @@ export default class Check extends SfCommand<CheckResponse> {
                 // TODO: Need to refactor this to list all errors once the process is complete
                 // throw new core.SfdxError(messages.getMessage('errorOrgWideCoverageBelowMinimum', [orgWideCoverage, converageRequirementForOrg]));
                 actionMessages.push(messages.getMessage('errorOrgWideCoverageBelowMinimum', [orgWideCoverage, converageRequirementForOrg]));
-                CliUx.ux.error(messages.getMessage('errorOrgWideCoverageBelowMinimum', [orgWideCoverage, converageRequirementForOrg]), { exit: false });
-
+                if ( ! flags.json ) {
+                    CliUx.ux.error(messages.getMessage('errorOrgWideCoverageBelowMinimum', [orgWideCoverage, converageRequirementForOrg]), { exit: false });
+                }
                 orgSuccessResult['success'] = false;
                 orgHasSufficientCodeCoverage = false;
             } else {
@@ -94,7 +95,7 @@ export default class Check extends SfCommand<CheckResponse> {
         }
 
         if ( ! flags.ignoreclasscoverage && ! ignoreClassCoverageProjectJsonSetting) {
-            const converageRequirementForApexClass = _.get(projectJson['contents'], 'plugins.toolbox.coverageRequirement.classes', 73);
+            const converageRequirementForApexClass = _.get(projectJson['contents'], 'plugins.toolbox.coverageRequirement.classes', "73");
 
             const coverageResultInformation = testResultInformation.coverage;
             // CliUx.ux.logJson(coverageResultInformation);
@@ -126,7 +127,9 @@ export default class Check extends SfCommand<CheckResponse> {
                     // throw new core.SfdxError(`The coverage for ${coverage['name']} is less than ${converageRequirementForApexClass}`);
                     // CliUx.ux.error(`The coverage for ${coverage['name']} is less than ${converageRequirementForApexClass}`);
                     actionMessages.push(messages.getMessage('errorClassCoverageBelowMinimum', [coverage['name'], coverage['coveredPercent'], converageRequirementForApexClass]));
-                    CliUx.ux.error(messages.getMessage('errorClassCoverageBelowMinimum', [coverage['name'], coverage['coveredPercent'], converageRequirementForApexClass]));
+                    if ( ! flags.json ) {
+                        CliUx.ux.error(messages.getMessage('errorClassCoverageBelowMinimum', [coverage['name'], coverage['coveredPercent'], converageRequirementForApexClass]));
+                    }
                     classSuccessResult['success'] = false;
                     allClassesHaveSufficientCodeCoverage = false;
                 } else {
@@ -148,11 +151,11 @@ export default class Check extends SfCommand<CheckResponse> {
         const throwErrorOnInsufficientClassCoverageProjectJsonSetting = _.get(projectJson['contents'], 'plugins.toolbox.coverageRequirement.throwErrorOnInsufficientClassCoverage', false) as boolean;
 
         // throw error if called for
-        // if ( (!flags.ignoreorgcoverage && ( flags.throwerroroninsufficientorgcoverage || throwErrorOnInsufficientOrgCoverageProjectJsonSetting) && !orgHasSufficientCodeCoverage)
-        //     || (!flags.ignoreclasscoverage && (flags.throwerroroninsufficientclasscoverage || throwErrorOnInsufficientClassCoverageProjectJsonSetting) && !allClassesHaveSufficientCodeCoverage)
-        // ) {
-        //     throw new SfError('Code Coverage Insufficient', 'CODE_COVERAGE_INSUFFICIENT', actionMessages, 1, null);
-        // }
+        if ( (!flags.ignoreorgcoverage && ( flags.throwerroroninsufficientorgcoverage || throwErrorOnInsufficientOrgCoverageProjectJsonSetting) && !orgHasSufficientCodeCoverage)
+            || (!flags.ignoreclasscoverage && (flags.throwerroroninsufficientclasscoverage || throwErrorOnInsufficientClassCoverageProjectJsonSetting) && !allClassesHaveSufficientCodeCoverage)
+        ) {
+            throw new SfError('Code Coverage Insufficient', 'CODE_COVERAGE_INSUFFICIENT', actionMessages, 1, null);
+        }
 
         // Return an object to be displayed with --json
         return checkResult;
