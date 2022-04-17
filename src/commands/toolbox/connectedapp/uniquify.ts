@@ -53,7 +53,9 @@ export default class ConnectedAppUniquify extends SfCommand<ConnectedAppUniquify
       json: existing,
     });
 
-    CliUx.ux.log(`${chalk.green('Connected app updated locally')}.\n\nConsumer Key is now ${consumerKey}`);
+    if ( ! flags.json ) {
+      CliUx.ux.log(`${chalk.green('Connected app updated locally')}.\n\nConsumer Key is now ${consumerKey}`);
+    }
 
     return { consumerKey } as ConnectedAppUniquifyResponse;
   }
