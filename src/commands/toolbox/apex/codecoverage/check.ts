@@ -44,7 +44,9 @@ export default class Check extends SfCommand<CheckResponse> {
 
         // CliUx.ux.logJson(converageRequirementForApexClass);
         // When reading a file with core library, it is an async operation and thus you need the "await" command added.
-        CliUx.ux.log(messages.getMessage('commandStartMessage', [flags.testcoveragefile]));
+        if ( ! flags.json ) {
+            CliUx.ux.log(messages.getMessage('commandStartMessage', [flags.testcoveragefile]));
+        }
         checkResult['testCoverageFileReviewed'] = flags.testcoveragefile;
         // JSON.parse(fs.readFileSync(projectFile.getPath(), 'UTF-8'));
         // const coverages = await core.fs.readJsonMap(flags.testcoveragefile);
@@ -78,7 +80,7 @@ export default class Check extends SfCommand<CheckResponse> {
                 // TODO: Need to refactor this to list all errors once the process is complete
                 // throw new core.SfdxError(messages.getMessage('errorOrgWideCoverageBelowMinimum', [orgWideCoverage, converageRequirementForOrg]));
                 actionMessages.push(messages.getMessage('errorOrgWideCoverageBelowMinimum', [orgWideCoverage, converageRequirementForOrg]));
-                CliUx.ux.error(messages.getMessage('errorOrgWideCoverageBelowMinimum', [orgWideCoverage, converageRequirementForOrg]));
+                CliUx.ux.error(messages.getMessage('errorOrgWideCoverageBelowMinimum', [orgWideCoverage, converageRequirementForOrg]), { exit: false });
 
                 orgSuccessResult['success'] = false;
                 orgHasSufficientCodeCoverage = false;
@@ -146,11 +148,11 @@ export default class Check extends SfCommand<CheckResponse> {
         const throwErrorOnInsufficientClassCoverageProjectJsonSetting = _.get(projectJson['contents'], 'plugins.toolbox.coverageRequirement.throwErrorOnInsufficientClassCoverage', false) as boolean;
 
         // throw error if called for
-        if ( (!flags.ignoreorgcoverage && ( flags.throwerroroninsufficientorgcoverage || throwErrorOnInsufficientOrgCoverageProjectJsonSetting) && !orgHasSufficientCodeCoverage)
-            || (!flags.ignoreclasscoverage && (flags.throwerroroninsufficientclasscoverage || throwErrorOnInsufficientClassCoverageProjectJsonSetting) && !allClassesHaveSufficientCodeCoverage)
-        ) {
-            throw new SfError('Code Coverage Insufficient', 'CODE_COVERAGE_INSUFFICIENT', actionMessages, 1, null);
-        }
+        // if ( (!flags.ignoreorgcoverage && ( flags.throwerroroninsufficientorgcoverage || throwErrorOnInsufficientOrgCoverageProjectJsonSetting) && !orgHasSufficientCodeCoverage)
+        //     || (!flags.ignoreclasscoverage && (flags.throwerroroninsufficientclasscoverage || throwErrorOnInsufficientClassCoverageProjectJsonSetting) && !allClassesHaveSufficientCodeCoverage)
+        // ) {
+        //     throw new SfError('Code Coverage Insufficient', 'CODE_COVERAGE_INSUFFICIENT', actionMessages, 1, null);
+        // }
 
         // Return an object to be displayed with --json
         return checkResult;
