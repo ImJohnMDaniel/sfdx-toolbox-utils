@@ -34,19 +34,17 @@ export default class Check extends SfCommand<CheckResponse> {
         
         // const projectJson = await this.project.retrieveSfdxProjectJson();
         const projectJson: SfProject = await SfProject.resolve();
-        // CliUx.ux.logJson(projectJson);
-        // CliUx.ux.logJson(projectJson['contents']); // this approach works!!!
+        // this.logJson(projectJson);
+        // this.logJson(projectJson['contents']); // this approach works!!!
         // const blue = projectJson.get('contents');
-        // CliUx.ux.logJson(blue);
+        // this.logJson(blue);
 
         // const converageRequirementForApexClass = _.get(projectJson.get('plugins'), 'toolbox.coverageRequirement') || 70;
         // const converageRequirementForApexClass = _.get(projectJson.get('contents'), 'plugins.toolbox.coverageRequirementForClasses', 81);
 
-        // CliUx.ux.logJson(converageRequirementForApexClass);
+        // this.logJson(converageRequirementForApexClass);
         // When reading a file with core library, it is an async operation and thus you need the "await" command added.
-        if ( ! flags.json ) {
-            CliUx.ux.log(messages.getMessage('commandStartMessage', [flags.testcoveragefile]));
-        }
+        this.log(messages.getMessage('commandStartMessage', [flags.testcoveragefile]));
         checkResult['testCoverageFileReviewed'] = flags.testcoveragefile;
         // JSON.parse(fs.readFileSync(projectFile.getPath(), 'UTF-8'));
         // const coverages = await core.fs.readJsonMap(flags.testcoveragefile);
@@ -75,14 +73,12 @@ export default class Check extends SfCommand<CheckResponse> {
             orgSuccessResult['coveredPercent'] = orgWideCoverage;
             orgSuccessResult['converageRequirementForOrg'] = converageRequirementForOrg;
 
-            // CliUx.ux.log('orgWideCoverage == ' + orgWideCoverage);
+            // this.log('orgWideCoverage == ' + orgWideCoverage);
             if ( orgWideCoverage < converageRequirementForOrg ) {
                 // TODO: Need to refactor this to list all errors once the process is complete
                 // throw new core.SfdxError(messages.getMessage('errorOrgWideCoverageBelowMinimum', [orgWideCoverage, converageRequirementForOrg]));
                 actionMessages.push(messages.getMessage('errorOrgWideCoverageBelowMinimum', [orgWideCoverage, converageRequirementForOrg]));
-                if ( ! flags.json ) {
-                    CliUx.ux.error(messages.getMessage('errorOrgWideCoverageBelowMinimum', [orgWideCoverage, converageRequirementForOrg]), { exit: false });
-                }
+                    this.error(messages.getMessage('errorOrgWideCoverageBelowMinimum', [orgWideCoverage, converageRequirementForOrg]), { exit: false });
                 orgSuccessResult['success'] = false;
                 orgHasSufficientCodeCoverage = false;
             } else {
@@ -98,10 +94,10 @@ export default class Check extends SfCommand<CheckResponse> {
             const converageRequirementForApexClass = _.get(projectJson['contents'], 'plugins.toolbox.coverageRequirement.classes', "73");
 
             const coverageResultInformation = testResultInformation.coverage;
-            // CliUx.ux.logJson(coverageResultInformation);
+            // this.logJson(coverageResultInformation);
 
             const coverageSubsectionResultInformation = coverageResultInformation.coverage;
-            // CliUx.ux.logJson(coverageSubsectionResultInformation);
+            // this.logJson(coverageSubsectionResultInformation);
 
             // orgSuccessResult['success'] = false;
             const classDetailCoverages = [];
@@ -113,7 +109,7 @@ export default class Check extends SfCommand<CheckResponse> {
             // this reviews the individual coverage for each Apex class file
             _.forEach(coverageSubsectionResultInformation, coverage => {
                 const classSuccessResult = {};
-                // CliUx.ux.log('coverage[coveredPercent] == ' + coverage['coveredPercent']);
+                // this.log('coverage[coveredPercent] == ' + coverage['coveredPercent']);
                 classSuccessResult['name'] = coverage['name'];
 
                 if (_.isInteger(coverage['coveredPercent'])) {
@@ -125,11 +121,9 @@ export default class Check extends SfCommand<CheckResponse> {
                 if (coverage['coveredPercent'] < converageRequirementForApexClass) {
                     // TODO: Need to refactor this to list all errors once the process is complete
                     // throw new core.SfdxError(`The coverage for ${coverage['name']} is less than ${converageRequirementForApexClass}`);
-                    // CliUx.ux.error(`The coverage for ${coverage['name']} is less than ${converageRequirementForApexClass}`);
+                    // this.error(`The coverage for ${coverage['name']} is less than ${converageRequirementForApexClass}`);
                     actionMessages.push(messages.getMessage('errorClassCoverageBelowMinimum', [coverage['name'], coverage['coveredPercent'], converageRequirementForApexClass]));
-                    if ( ! flags.json ) {
-                        CliUx.ux.error(messages.getMessage('errorClassCoverageBelowMinimum', [coverage['name'], coverage['coveredPercent'], converageRequirementForApexClass]));
-                    }
+                        this.error(messages.getMessage('errorClassCoverageBelowMinimum', [coverage['name'], coverage['coveredPercent'], converageRequirementForApexClass]));
                     classSuccessResult['success'] = false;
                     allClassesHaveSufficientCodeCoverage = false;
                 } else {

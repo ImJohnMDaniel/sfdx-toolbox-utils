@@ -17,14 +17,9 @@ export interface ConnectedAppUniquifyResponse {
 }
 
 export default class ConnectedAppUniquify extends SfCommand<ConnectedAppUniquifyResponse> {
-  // public static description = 'modify a clientId/consumerKey on a local connected app to guaranatee uniqueness';
+
   public static description = messages.getMessage('commandDescription');
 
-//   public static examples = [
-//     `sfdx toolbox:connectedapp:uniquify -a sfdx-source/main/connectedApps/myConnectedApp.connectedApp-meta.xml
-// // update the consumerKey of myConnectedApp to be unique
-// `
-//   ];
   public static examples = [messages.getMessage('exampleDescription')];
 
   public static requiresProject = true;
@@ -53,9 +48,7 @@ export default class ConnectedAppUniquify extends SfCommand<ConnectedAppUniquify
       json: existing,
     });
 
-    if ( ! flags.json ) {
-      CliUx.ux.log(`${chalk.green('Connected app updated locally')}.\n\nConsumer Key is now ${consumerKey}`);
-    }
+    this.log(`${chalk.green('Connected app updated locally')}.\n\nConsumer Key is now ${consumerKey}`);
 
     return { consumerKey } as ConnectedAppUniquifyResponse;
   }
