@@ -1,4 +1,4 @@
-import { Flags, CliUx } from '@oclif/core';
+import { Flags } from '@oclif/core';
 import { SfCommand } from '@salesforce/sf-plugins-core';
 import { Messages, SfError, SfProject } from '@salesforce/core';
 import fs = require('fs-extra');
